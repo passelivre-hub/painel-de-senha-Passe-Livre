@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Atendente</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        input {
+            font-size: 24px;
+            padding: 10px;
+            margin: 10px;
+        }
+        button {
+            font-size: 24px;
+            padding: 15px 30px;
+            margin: 10px;
+        }
+        #mensagem, #status {
+            font-size: 20px;
+            color: green;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chamar Senha</h1>
+
+    <input type="number" id="senha" placeholder="Senha (opcional)">
+    <input type="text" id="guiche" placeholder="Guichê">
+    <br>
+    <button onclick="chamarSenha()">Chamar Senha</button>
+    <button onclick="repetirSom()">Repetir Som</button>
+    <br>
+    <button onclick="chamarProxima()">Chamar Próxima Senha</button>
+
+    <p id="mensagem"></p>
+    <p id="status">Carregando status atual...</p>
+
+    <script>
+        function chamarSenha() {
+            const senha = document.getElementById("senha").value;
+            const guiche = document.getElementById("guiche").value;
+
+            if (!guiche) {
+                alert("Guichê é obrigatório");
+                return;
+            }
+
+            const params = new URLSearchParams();
+            if (senha) params.append("senha", senha);
+            params.append("guiche", guiche);
+
+            fetch("/chamar_senha", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("mensagem").innerText = data.mensagem;
+                atualizarStatus();
+            });
+        }
+
+        function chamarProxima() {
+            document.getElementById("senha").value = "";
+            chamarSenha();
+        }
+
+        function repetirSom() {
+            fetch("/repetir_som", { method: "POST" })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById("mensagem").innerText = data.mensagem;
+                });
+        }
+
+        function atualizarStatus() {
+            fetch("/dados_painel")
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("status").innerText =
+                        `Senha atual: ${data.senha} | Guichê: ${data.guiche}`;
+                });
+        }
+
+        document.addEventListener("keydown", e => {
+            if (e.key === "Enter") chamarSenha();
+        });
+
+        setInterval(atualizarStatus, 3000);
+        window.onload = atualizarStatus;
+    </script>
+</body>
+</html>

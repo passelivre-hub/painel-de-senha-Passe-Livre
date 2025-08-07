@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel de Senhas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A1C84D" />
+  <link rel="manifest" href="/static/manifest.json" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(120deg, #2c3e50, #3498db);
+      background-size: 400% 400%;
+      animation: gradiente 15s ease infinite;
+      overflow: hidden;
+    }
+
+    @keyframes gradiente {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 10px 40px;
+    }
+
+    header img {
+      max-height: 140px;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      height: calc(100vh - 160px);
+      width: 100vw;
+    }
+
+    .video-area, .info-area {
+      flex: 1 1 50%;
+      min-height: 50vh;
+      max-height: 100vh;
+    }
+
+    .video-area {
+      background-color: black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #videoInstitucional {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background-color: black;
+    }
+
+    .info-area {
+      background-image: url('/static/textura_fundo.png');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      gap: 20px;
+      backdrop-filter: blur(3px);
+    }
+
+    .info-box {
+      width: 90%;
+      padding: 20px;
+      background-color: #A1C84D;
+      color: white;
+      font-size: 5vw;
+      font-weight: bold;
+      text-align: center;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    #somBtn {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      font-size: 14px;
+      padding: 8px 16px;
+      background: #ffffffaa;
+      border: 1px solid #fff;
+      color: #000;
+      border-radius: 6px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .piscar {
+      animation: piscar 1s ease-in-out 3;
+    }
+
+    @keyframes piscar {
+      0%, 100% { background-color: #A1C84D; }
+      50% { background-color: #b9d877; }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .video-area, .info-area {
+        flex: 1 1 100%;
+        min-height: 45vh;
+      }
+
+      .info-box {
+        font-size: 7vw;
+      }
+
+      header img {
+        max-height: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="/static/fcee.jpg" alt="Logo FCEE" />
+    <img src="/static/govsc.png" alt="Logo Governo SC" />
+  </header>
+
+  <div class="container">
+    <div class="video-area">
+      <!-- Mantém muted para autoplay no mobile -->
+      <video id="videoInstitucional" autoplay muted loop playsinline>
+        <source id="videoSource" src="/static/videos/video1.mp4" type="video/mp4">
+        Seu navegador não suporta vídeos HTML5.
+      </video>
+    </div>
+
+    <div class="info-area">
+      <div id="senha" class="info-box">Senha: --</div>
+      <div id="guiche" class="info-box">Mesa: --</div>
+    </div>
+  </div>
+
+  <button id="somBtn" onclick="ativarSom()">Ativar Som</button>
+
+  <script>
+    let somAtivado = false;
+    let ultimaSenha = "";
+    let tocando = false;
+
+    const audio = new Audio();
+    const alerta = new Audio("/static/alerta.mp3");
+
+    const video = document.getElementById("videoInstitucional");
+    const videoSource = document.getElementById("videoSource");
+    const videos = ["/static/videos/video1.mp4"];
+    let videoIndex = 0;
+
+    function ativarSom() {
+      somAtivado = true;
+      video.muted = false; // desmuta o vídeo só após clique
+      video.volume = 1;
+      alerta.currentTime = 0;
+
+      alerta.play().then(() => {
+        document.getElementById("somBtn").style.display = "none";
+      }).catch(() => {
+        alert("⚠️ Clique novamente para liberar o som.");
+      });
+    }
+
+    function aplicarEfeitoPiscar(element) {
+      element.classList.remove("piscar");
+      void element.offsetWidth;
+      element.classList.add("piscar");
+    }
+
+    function tocarComAlerta(caminhoAudio) {
+      if (!somAtivado || tocando) return;
+      tocando = true;
+
+      const volumeOriginal = video.volume;
+      video.volume = 0; // abaixa o som do vídeo durante aviso
+
+      alerta.currentTime = 0;
+      alerta.play().then(() => {
+        alerta.onended = () => {
+          audio.src = caminhoAudio + "?" + new Date().getTime();
+          audio.play();
+        };
+      }).catch(() => {
+        video.volume = volumeOriginal;
+        tocando = false;
+      });
+
+      audio.onended = () => {
+        video.volume = volumeOriginal;
+        tocando = false;
+      };
+    }
+
+    function atualizarPainel() {
+      fetch("/dados_painel")
+        .then(res => res.json())
+        .then(dados => {
+          const senhaEl = document.getElementById("senha");
+          const guicheEl = document.getElementById("guiche");
+
+          senhaEl.textContent = "Senha: " + (dados.senha || "--");
+          guicheEl.textContent = "Mesa: " + (dados.guiche || "--");
+
+          if (dados.senha && dados.senha !== ultimaSenha) {
+            ultimaSenha = dados.senha;
+            const caminho = `/static/audios/senha_${dados.senha}_guiche_${dados.guiche}.mp3`;
+            if (somAtivado) tocarComAlerta(caminho);
+            aplicarEfeitoPiscar(senhaEl);
+            aplicarEfeitoPiscar(guicheEl);
+          }
+        });
+    }
+
+    function verificarRepeticao() {
+      fetch("/verificar_repeticao")
+        .then(res => res.json())
+        .then(data => {
+          if (data.repetir) {
+            const senha = document.getElementById("senha").textContent.split(":")[1].trim();
+            const guiche = document.getElementById("guiche").textContent.split(":")[1].trim();
+            if (!senha || !guiche || senha === "--" || guiche === "--") return;
+            const caminho = `/static/audios/senha_${senha}_guiche_${guiche}.mp3`;
+            if (somAtivado) {
+              tocarComAlerta(caminho);
+              aplicarEfeitoPiscar(document.getElementById("senha"));
+              aplicarEfeitoPiscar(document.getElementById("guiche"));
+            }
+          }
+        });
+    }
+
+    function alternarVideo() {
+      if (videos.length <= 1) return;
+      videoIndex = (videoIndex + 1) % videos.length;
+      videoSource.src = videos[videoIndex];
+      video.load();
+    }
+
+    setInterval(atualizarPainel, 1000);
+    setInterval(verificarRepeticao, 2000);
+    setInterval(alternarVideo, 60000);
+
+    atualizarPainel();
+  </script>
+</body>
+</html>

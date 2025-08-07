@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Histórico de Chamadas</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        h1 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        th { background: #eee; }
+    </style>
+</head>
+<body>
+    <h1>Últimas Senhas Chamadas</h1>
+    <table>
+        <tr><th>Senha</th><th>Guichê</th></tr>
+        {% for chamada in chamadas %}
+        <tr><td>{{ chamada.senha }}</td><td>{{ chamada.guiche }}</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
