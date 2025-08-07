@@ -1,2 +1,16 @@
-# painel-de-senha-Passe-Livre
-Este é um sistema web completo para gerenciamento de senhas, incluindo:  - Painel visual com exibição da senha atual e mesa - Áudio automático com voz sintetizada via Google TTS (gTTS) - Botão "Ativar Som" - Vídeo institucional em loop com ajuste de volume - Tela do atendente para chamar ou repetir senhas - Histórico das últimas chamadas
+# Sistema de Senhas com Painel Digital
+
+Sistema Flask para gerenciamento de senhas com painel visual e geração de áudio.
+
+## Funcionalidades
+
+- Painel moderno com exibição de senha e mesa
+- Geração automática de áudio com gTTS
+- Modo atendente para chamar e repetir senhas
+- Histórico de chamadas
+
+## Como rodar localmente
+
+```bash
+pip install -r requirements.txt
+python app.py
